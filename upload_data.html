@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Insert Data</title>
+	<link rel="stylesheet" type="text/css" href="assets/css/bootstrap.css">
+	<!-- Firebase -->
+	<script src="https://www.gstatic.com/firebasejs/6.4.2/firebase-app.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/6.4.2/firebase-firestore.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/6.4.2/firebase-storage.js"></script>
+</head>
+<body>
+	<div class="container"><br><br>
+		<div class="card">
+			<div class="card-header" style="background-color: #e3f2fd;">
+				<h5>Insert Data</h5>
+			</div>
+
+			<div class="card-body">
+				<div class="form-group">
+					<label>No Buku Tanah</label>
+					<input type="text" id="nbt" class="form-control" required>
+				</div>
+
+				<div id="app"></div>
+
+				<div class="form-group">
+					<label>Tipe Hak</label>
+					<select id="select_hk" class="form-control">
+						<option>Select Hak</option>
+						<option>Hak Milik</option>
+						<option>Hak Guna Bangunan</option>
+						<option>Hak Pakai</option>
+						<option>Hak Wafat</option>
+					</select>
+				</div>
+
+				<div class="form-group">
+					<label>Upload File</label><br>
+					<progress value="0" max="100" id="uploadfile">0%</progress>
+					<input type="file" class="form-control" id="uploadpdf" name="dat" accept=".pdf">
+				</div>
+
+				<div>
+					<hr>
+					<a href="Index.html" class="btn btn-danger">Back</a>
+				</div> 
+			</div>
+		</div>
+	</div>
+
+<script src="config.js"></script>
+<script src="assets/js/jquery.js"></script>
+<script src="assets/js/vue.js"></script>
+<script>
+new Vue({
+    el: '#app',
+    template: `
+        <div class="cascading-dropdown">
+            <div class="dropdown">
+                <span>Kabupaten</span>
+                <select v-model="selectedContinent" class='form-control' id='kabu'>
+                    <option value="">Pilih Kabupaten</option>
+                    <option v-for="(country_obj, country) in places" :value="country">{{country}}</option>
+                </select>
+            </div><br>
+
+            <div class="dropdown">
+                <span>Kecamatan</span> 
+                <select :disabled="countries.length == 0" v-model="selectedCountry" class='form-control' id='kec'>
+                    <option value="">Pilih Kecamatan</option>
+                    <option v-for="(city_obj, city) in countries">{{city}}</option>
+                </select>
+            </div><br>
+
+            <div class="dropdown">
+                <span>Desa</span>
+                <select :disabled="cities.length == 0" v-model="selectedCity" class='form-control' id='des'>
+                    <option value="">Pilih Desa</option>
+                    <option v-for="city in cities">{{city}}</option>
+                </select><br>
+            </div>
+        </div>
+    `,
+    data: function() {
+        return {
+            places: {
+                "Mataram": {
+                    "Ampenan": ["Ampenan Utara", "Ampenan Tengah", "Ampenan Selatan", "Banjar", "Bintaro", "Dayen Peken", "Kebun Sari", "Pejarakan Karya", "Pejeruk", "Taman Sari"],
+                    "Cakranegara": ["Cakranegara Barat", "Cakranegara Selatan", "Cakranegara Selat Baru", "Cakranegara Timur", "Cakranegara Utara", "Cilinaya", "Karang Taliwang", "Mayura", "Sapta Marga", "Sayang Sayang"],
+                    "Mataram": ["Mataram Timur", "Pagesangan", "Pagesangan Barat", "Pagesangan Timur", "Pagutan", "Pagutan Barat", "Pagutan Timur", "Pejanggik", "Punia"],
+                    "Sandubaya": ["Abian Tubuh Baru", "Babakan", "Bertais", "Dasan Cermen", "Mandalika", "selagalas", "Turida"],
+                    "Sekarbela": ["Jempong Baru", "Karang Pule", "Kekalik jaya", "Tanjung Karang", "Tanjung Karang Permai"],
+                    "Selaparang": ["Dasan Agung", "Dasan Agung Baru", "Karang Baru", "Mataram Barat", "Monjok", "Monjok Barat", "Monjok Timur", "Rembiga"]
+                }
+            },
+            countries: [],
+            cities: [],
+            selectedContinent: "",
+            selectedCountry: "",
+            selectedCity: ""
+        }
+    },
+    watch: {
+        selectedContinent: function() {
+            // Clear previously selected values
+            this.countries = [];
+            this.cities = [];
+            this.selectedCountry = "";
+            this.selectedCity = "";
+            // Populate list of countries in the second dropdown
+            if (this.selectedContinent.length > 0) {
+                this.countries = this.places[this.selectedContinent]
+            }
+        },
+        selectedCountry: function() {
+            // Clear previously selected values
+            this.cities = [];
+            this.selectedCity = "";
+            // Now we have a continent and country. Populate list of cities in the third dropdown
+            if (this.selectedCountry.length > 0) {
+                this.cities = this.places[this.selectedContinent][this.selectedCountry]
+            }
+        }
+    }
+})
+
+var progress = document.getElementById('uploadfile')
+var button = document.getElementById('uploadpdf')
+const storage = firebase.storage();
+
+	button.addEventListener('change', function(e){
+
+		var file = e.target.files[0];
+		var storageRef = storage.ref('BT/' + file.name)
+		var UploadTask = storageRef.put(file)
+
+		UploadTask.on('state_changed', loadUpload, errUpload, complateUpload)
+
+		function loadUpload(data){
+			var perecent = (data.bytesTransferred/data.totalBytes) * 100
+			progress.value = perecent
+		} function errUpload(err){
+			console.log('error')
+			console.log(err)
+		} function complateUpload(data){
+			// console.log(storageRef.data().fullpath)
+		UploadTask.snapshot.ref.getDownloadURL().then(function(downloadURL){
+			db.collection('BT/').add({
+			No_Buku_Tanah: $("#nbt").val(),
+			Kabupaten: $("#kabu").val(),
+			Kecamatan: $("#kec").val(),
+			Desa: $("#des").val(),
+			Hak_Milik: $("#select_hk").val(),
+			nama_pdf: file.name 	,
+			UrlDownload: downloadURL
+		}).then(function(){
+		  		console.log('File available at', downloadURL);
+		  		window.location="Index.html"; 
+		  	}).catch(function(error){
+		  		console.log("Got an Error: ", error);
+		  	});
+		});
+	}
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>List Data Tanah</title>
+	<link rel="stylesheet" type="text/css" href="assets/css/bootstrap.css">
+	<!-- Firebase -->
+	<script src="https://www.gstatic.com/firebasejs/6.4.2/firebase-app.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/6.4.2/firebase-firestore.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/6.4.2/firebase-storage.js"></script>
+
+</head>
+<body>
+		<div class="container" id="app"><br><br>
+			
+				<div class="card">
+					<div class="card-header" style="background-color: #e3f2fd;">
+						 
+					</div>
+					
+					<div class="card-body">
+						<div>
+						<h3>List Data Buku Tanah
+						<a href="upload_data.html" class="btn btn-primary float-right">+ Add data</a><br></h3>
+						</div>
+						<hr> 
+						<input type="text" v-model = "search" placeholder="Search Data here" class="form-control"></input><br>
+						<table class="table" style="width:100%" id="mytable">
+							<thead>
+								<tr>			
+									<th style="text-align:center">Nomor Buku</th>
+									<th style="text-align:center">Desa</th>
+									<th style="text-align:center">Jenis Hak</th>
+									<th style="text-align:center">Opsi</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr v-for="c in filterdata">				
+									<td style="text-align:center"><a :href="url(c)" >{{c.data().No_Buku_Tanah}}</a></td>
+									<td style="text-align:center">{{c.data().Desa}}</a></td>
+									<td style="text-align:center">{{c.data().Hak_Milik}}</td>
+									<td>
+										<button type="button" class="btn btn-danger" v-on:click="del(c)">Delete</button>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+
+					</div>
+				</div>
+		</div>
+		
+	<script src="assets/js/vue.js"></script>
+	<script src="assets/js/jquery.js"></script>
+	<script src="config.js"></script>
+	<!-- untuk menampilkan table -->
+	<script>
+	var example1 = new Vue({
+	    el : '#app',
+	    data : {
+	      items : [],
+	      id : [],
+	      search: ''
+	    },
+	    created(){
+	      this.fetchdata();
+	    },
+	    methods : {
+	    	fetchdata(){
+	    		var self = this;
+	    		db.collection('BT').get().then((querySnapshot) => {
+					querySnapshot.forEach(doc => {
+						// self.items = snapshot.docs
+						self.items.push(doc);
+						console.log(self.items);
+						// console.log(doc.id);
+					})	    			
+	    		})
+    	},
+    	del(c){
+    		var desertRef = firebase.storage().ref('BT/' + c.data().nama_pdf);
+    		// Delete the file
+			desertRef.delete().then(function() {
+			  // File deleted successfully
+    		db.collection('BT').doc(c.id).delete()
+    		.then(response => {
+	          alert("data berhasil di delete")
+	          window.location.reload()
+    		  this.fetchdata()
+
+	        })
+    		
+			}).catch(function(error) {
+			  // Uh-oh, an error occurred!
+			});
+    	},
+    	url(c){
+    		return c.data().UrlDownload;
+    	}
+    },
+
+    computed: {
+    	filterdata: function(){
+    		return this.items.filter((doc) => {
+    			return doc.data().No_Buku_Tanah.toLowerCase().match(this.search) ||
+    			doc.data().Desa.toLowerCase().match(this.search) 
+    		});
+    	}
+    }
+})
+	</script>
+
+	<script>
+		var table = '#mytable'
+
+	</script>
+</body>
+</html>
